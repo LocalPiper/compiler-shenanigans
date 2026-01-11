@@ -14,98 +14,110 @@ bool match(const char *str) {
   return false;
 }
 
-bool o1() {
-  if (match("I")) {
-    if (match("I")) {
-      match("I");
-    }
-    return true;
-  }
-  return true;
-}
-
-bool m1() {
-  if (match("IX"))
-    return true;
-  if (match("IV"))
-    return true;
-
-  if (match("V")) {
-    return o1();
-  }
-
-  return o1();
-}
-
-bool o2() {
-  if (match("X")) {
-    if (match("X")) {
-      match("X");
-    }
-    return true;
-  }
-  return true;
-}
-
-bool m2() {
-  if (match("XC"))
-    return true;
-  if (match("XL"))
-    return true;
-
-  if (match("L")) {
-    return o2();
-  }
-
-  return o2();
-}
-
-bool l2() { return m2() && m1(); }
-
-bool o3() {
-  if (match("C")) {
-    if (match("C")) {
-      match("C");
-    }
-    return true;
-  }
-  return true;
-}
-
-bool m3() {
-  if (match("CM"))
-    return true;
-  if (match("CD"))
-    return true;
-
-  if (match("D")) {
-    return o3();
-  }
-
-  return o3();
-}
-
-bool l3() { return m3() && l2(); }
-
-bool o4() {
+bool T() {
   if (match("M")) {
     if (match("M")) {
       match("M");
     }
     return true;
   }
-  return true;
+  return false;
 }
 
-bool num() { return o4() && l3(); }
+bool H() {
+  if (match("D")) {
+    if (match("C")) {
+      if (match("C")) {
+        match("C");
+      }
+    }
+    return true;
+  }
+
+  if (match("C")) {
+    if (match("D") || match("M")) {
+      return true;
+    }
+    if (match("C")) {
+      match("C");
+    }
+    return true;
+  }
+
+  return false;
+}
+
+bool E() {
+  if (match("L")) {
+    if (match("X")) {
+      if (match("X")) {
+        match("X");
+      }
+    }
+    return true;
+  }
+
+  if (match("X")) {
+    if (match("L") || match("C")) {
+      return true;
+    }
+    if (match("X")) {
+      match("X");
+    }
+    return true;
+  }
+
+  return false;
+}
+
+bool O() {
+  if (match("V")) {
+    if (match("I")) {
+      if (match("I")) {
+        match("I");
+      }
+    }
+    return true;
+  }
+
+  if (match("I")) {
+    if (match("V") || match("X")) {
+      return true;
+    }
+    if (match("I")) {
+      match("I");
+    }
+    return true;
+  }
+
+  return false;
+}
+
+bool T_opt() {
+  return T() || true;
+}
+
+bool H_opt() {
+  return H() || true;
+}
+
+bool E_opt() {
+  return E() || true;
+}
+
+bool O_opt() {
+  return O() || true;
+}
+
+bool num() {
+  return (T() && H_opt() && E_opt() && O_opt()) || (H() && E_opt() && O_opt()) || (E() && O_opt()) || O();
+}
 
 bool is_valid_roman(const char *str) {
   input = str;
   position = 0;
 
-  if (!num() || *input == '\0') {
-    return false;
-  }
+  if (!num()) return false;
 
   return input[position] == '\0';
 }
