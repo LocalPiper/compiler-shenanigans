@@ -1,0 +1,48 @@
+digraph DFA {
+  rankdir=LR;
+  node [label=""]  n0 [label="", shape=circle];
+  n0 -> n1 [label="a"]
+  n1 [label="a", shape=circle];
+  n1 -> n2 [label="l"]
+  n2 [label="al", shape=circle];
+  n2 -> n3 [label="l"]
+  n3 [label="all", shape=doublecircle];
+  n0 -> n4 [label="f"]
+  n4 [label="f", shape=circle];
+  n4 -> n5 [label="a"]
+  n5 [label="fa", shape=circle];
+  n5 -> n6 [label="l"]
+  n6 [label="fal", shape=circle];
+  n6 -> n7 [label="l"]
+  n7 [label="fall", shape=doublecircle];
+  n5 -> n8 [label="t"]
+  n8 [label="fat", shape=circle];
+  n8 -> n9 [label="a"]
+  n9 [label="fata", shape=circle];
+  n9 -> n10 [label="l"]
+  n10 [label="fatal", shape=doublecircle];
+  n0 -> n11 [label="l"]
+  n11 [label="l", shape=circle];
+  n11 -> n12 [label="a"]
+  n12 [label="la", shape=circle];
+  n12 -> n13 [label="m"]
+  n13 [label="lam", shape=circle];
+  n13 -> n14 [label="e"]
+  n14 [label="lame", shape=doublecircle];
+  n11 -> n15 [label="l"]
+  n15 [label="ll", shape=circle];
+  n15 -> n16 [label="a"]
+  n16 [label="lla", shape=circle];
+  n16 -> n17 [label="m"]
+  n17 [label="llam", shape=circle];
+  n17 -> n18 [label="a"]
+  n18 [label="llama", shape=doublecircle];
+  n0 -> n19 [label="t"]
+  n19 [label="t", shape=circle];
+  n19 -> n20 [label="a"]
+  n20 [label="ta", shape=circle];
+  n20 -> n21 [label="l"]
+  n21 [label="tal", shape=circle];
+  n21 -> n22 [label="l"]
+  n22 [label="tall", shape=doublecircle];
+}
