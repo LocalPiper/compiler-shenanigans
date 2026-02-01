@@ -3,7 +3,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-int* f;
+int* lps;
 
 void compute_failure_function(const char* s) {
   int n = strlen(s);
@@ -14,7 +14,7 @@ void compute_failure_function(const char* s) {
     if (s[i] == s[j]) ++i;
     arr[j] = i;
   }
-  f = arr;
+  lps = arr;
 }
 
 bool find(const char* s, const char* t) {
@@ -23,12 +23,27 @@ bool find(const char* s, const char* t) {
   size_t i = 0;
 
   for (size_t j = 0; j < m; ++j) {
-    while (i > 0 && s[i] != t[j]) i = f[i - 1];
+    while (i > 0 && s[i] != t[j]) i = lps[i - 1];
     if (s[i] == t[j]) ++i;
     if (i == n) return true;
   }
 
   return false;
+}
+
+int count_occurencies(const char* s, const char* t) {
+  size_t n = strlen(s);
+  size_t m = strlen(t);
+  size_t i = 0;
+  int res = 0;
+
+  for (size_t j = 0; j < m; ++j) {
+    while (i > 0 && s[i] != t[j]) i = lps[i - 1];
+    if (s[i] == t[j]) ++i;
+    if (i == n) ++res;
+  }
+
+  return res; 
 }
 
 int main(int argc, char** argv) {
@@ -43,6 +58,7 @@ int main(int argc, char** argv) {
   compute_failure_function(s);
 
   printf("%s\n", find(s, t)? "True" : "False");
+  printf("Occurencies: %d", count_occurencies(s, t));
 
-  free(f);
+  free(lps);
 }
