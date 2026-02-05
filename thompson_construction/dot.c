@@ -1,11 +1,12 @@
 #include "nfa.h"
-#include <stdio.h>
 #include <stdbool.h>
+#include <stdio.h>
 
 static char label_buf[2];
 
-const char* get_label(int c) {
-  if (c == -1) return "ε";
+const char *get_label(int c) {
+  if (c == -1)
+    return "ε";
   if (c > 0) {
     label_buf[0] = (char)c;
     label_buf[1] = 0;
@@ -14,14 +15,15 @@ const char* get_label(int c) {
   return NULL;
 }
 
-void emit_nfa(const State* s, FILE* out, bool* vis) {
-  if (!s || vis[s->id]) return;
+void emit_nfa(const State *s, FILE *out, bool *vis) {
+  if (!s || vis[s->id])
+    return;
   vis[s->id] = true;
 
-  const char* shape = s->is_final ? "doublecircle" : "circle";
+  const char *shape = s->is_final ? "doublecircle" : "circle";
   fprintf(out, "  n%d [shape=%s, label=\"n%d\"];\n", s->id, shape, s->id);
 
-  const char* label = get_label(s->c);
+  const char *label = get_label(s->c);
 
   if (s->out1 && label) {
     fprintf(out, "  n%d -> n%d [label=\"%s\"];\n", s->id, s->out1->id, label);
@@ -35,8 +37,7 @@ void emit_nfa(const State* s, FILE* out, bool* vis) {
   emit_nfa(s->out2, out, vis);
 }
 
-
-void write_dot(const State* nfa, FILE* out) {
+void write_dot(const State *nfa, FILE *out) {
   fprintf(out, "digraph DFA {\n");
   fprintf(out, "  rankdir=LR;\n");
 
@@ -46,8 +47,8 @@ void write_dot(const State* nfa, FILE* out) {
   fprintf(out, "}\n");
 }
 
-void write_dot_file(const State* nfa) {
-  FILE* file = fopen("output.dot", "w+");
+void write_dot_file(const State *nfa) {
+  FILE *file = fopen("output.dot", "w+");
   if (!file) {
     perror("fopen()");
     return;
