@@ -104,6 +104,7 @@ State* thompson(const char* s) {
       f1.out->out1 = f2.start->out1;
       f1.out->out2 = f2.start->out2;
       f1.out->c = f2.start->c;
+      free(f2.start);
       push((Frag){f1.start, f2.out});
     } else if (tok == '|') {
       Frag f2 = pop();
@@ -161,5 +162,6 @@ int main(int argc, char** argv) {
   number_states(nfa);
   write_dot_file(nfa);
   free(regex);
+  nfa_destroy(nfa);
   return 0;
 }
