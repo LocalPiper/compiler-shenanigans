@@ -1,7 +1,10 @@
 #include "stack.h"
+#include "nfa.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#define EPSILON -1
+#define MATCH -2
 
 int is_literal(const char c) {
   return c != '(' && c != ')' && c != '*' && c != '|' && c != '.';
@@ -78,6 +81,51 @@ void shunting_yard(char** ps) {
   *ps = res;
 }
 
+Frag frag_stack[1024];
+int fsp = 0;
+
+void push(Frag f) { frag_stack[fsp++] = f; }
+Frag pop() { return frag_stack[--fsp]; }
+
+State* thompson(const char* s) {
+  for (const char* p = s; *p; ++p) {
+    char tok = *p;
+
+    if (is_literal(tok)) {
+      State* s1 = state_init(tok, NULL, NULL);
+      State* s2 = state_init(EPSILON, NULL, NULL);
+      s1->out1 = s2;
+      push((Frag){s1, s2});
+    } else if (tok == '.') {
+      Frag f2 = pop();
+      Frag f1 = pop();
+      f1.out->out1 = f2.start;
+      push((Frag){f1.start, f2.out});
+    } else if (tok == '|') {
+      Frag f2 = pop();
+      Frag f1 = pop();
+      State* s = state_init(EPSILON, f1.start, f2.start);
+      State* out = state_init(EPSILON, NULL, NULL);
+      f1.out->out1 = out;
+      f2.out->out1 = out;
+      push((Frag){s, out});
+    } else if (tok == '*') {
+      Frag f = pop();
+      State* s = state_init(EPSILON, f.start, NULL);
+      State* out = state_init(EPSILON, NULL, NULL);
+      f.out->out1 = f.start;
+      f.out->out2 = out;
+      s->out2 = out;
+      push((Frag){s, out});
+    }
+  }
+
+  Frag e = pop();
+  State* match = state_init(MATCH, NULL, NULL);
+  e.out->out1 = match;
+  return e.start;
+}
+
 int main(int argc, char** argv) {
   if (argc < 2) {
     fprintf(stderr, "Usage: %s <regex>\n", argv[0]);
@@ -88,6 +136,7 @@ int main(int argc, char** argv) {
   printf("%s\n", regex);
   shunting_yard(&regex);
   printf("%s\n", regex);
+  State* nfa = thompson(regex);
   free(regex);
   return 0;
 }
