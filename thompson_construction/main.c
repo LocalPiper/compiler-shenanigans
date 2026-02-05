@@ -1,8 +1,10 @@
 #include "stack.h"
 #include "nfa.h"
+#include "dot.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #define EPSILON -1
 #define MATCH -2
 
@@ -88,42 +90,61 @@ void push(Frag f) { frag_stack[fsp++] = f; }
 Frag pop() { return frag_stack[--fsp]; }
 
 State* thompson(const char* s) {
+  fsp = 0;
   for (const char* p = s; *p; ++p) {
     char tok = *p;
-
     if (is_literal(tok)) {
-      State* s1 = state_init(tok, NULL, NULL);
-      State* s2 = state_init(EPSILON, NULL, NULL);
-      s1->out1 = s2;
-      push((Frag){s1, s2});
+      State* start = state_init(tok, NULL, NULL);
+      State* accept = state_init(0, NULL, NULL);
+      start->out1 = accept;
+      push((Frag){start, accept});
     } else if (tok == '.') {
       Frag f2 = pop();
       Frag f1 = pop();
-      f1.out->out1 = f2.start;
+      f1.out->out1 = f2.start->out1;
+      f1.out->out2 = f2.start->out2;
+      f1.out->c = f2.start->c;
       push((Frag){f1.start, f2.out});
     } else if (tok == '|') {
       Frag f2 = pop();
       Frag f1 = pop();
-      State* s = state_init(EPSILON, f1.start, f2.start);
-      State* out = state_init(EPSILON, NULL, NULL);
-      f1.out->out1 = out;
-      f2.out->out1 = out;
-      push((Frag){s, out});
+      State* split = state_init(EPSILON, f1.start, f2.start);
+      State* join = state_init(0, NULL, NULL);
+      f1.out->c = EPSILON;
+      f1.out->out1 = join;
+      f2.out->c = EPSILON;
+      f2.out->out1 = join;
+      push((Frag){split, join});
     } else if (tok == '*') {
       Frag f = pop();
-      State* s = state_init(EPSILON, f.start, NULL);
-      State* out = state_init(EPSILON, NULL, NULL);
+      State* join = state_init(0, NULL, NULL);
+      State* split = state_init(EPSILON, f.start, join);
+      f.out->c = EPSILON;
       f.out->out1 = f.start;
-      f.out->out2 = out;
-      s->out2 = out;
-      push((Frag){s, out});
+      f.out->out2 = join;
+      push((Frag){split, join});
     }
   }
+  Frag final_frag = pop();
+  final_frag.out->is_final = true;
+  return final_frag.start;
+}
+void number_states(State* nfa) {
+  int id = 0;
+  State* state_stack[1024];
+  int sp = 0;
 
-  Frag e = pop();
-  State* match = state_init(MATCH, NULL, NULL);
-  e.out->out1 = match;
-  return e.start;
+  state_stack[sp++] = nfa;
+
+  while (sp) {
+    State* s = state_stack[--sp];
+    if (s->id != -1) continue;
+
+    s->id = id++;
+
+    if (s->out1) state_stack[sp++] = s->out1;
+    if (s->out2) state_stack[sp++] = s->out2; 
+  }
 }
 
 int main(int argc, char** argv) {
@@ -137,6 +158,8 @@ int main(int argc, char** argv) {
   shunting_yard(&regex);
   printf("%s\n", regex);
   State* nfa = thompson(regex);
+  number_states(nfa);
+  write_dot_file(nfa);
   free(regex);
   return 0;
 }

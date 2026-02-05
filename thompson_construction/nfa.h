@@ -1,11 +1,13 @@
 #ifndef NFA_H
 #define NFA_H
+#include <stdbool.h>
 
 typedef struct State {
+  int id;
   int c;
   struct State* out1;
   struct State* out2;
-  int id;
+  bool is_final;
 } State;
 
 typedef struct Frag {
