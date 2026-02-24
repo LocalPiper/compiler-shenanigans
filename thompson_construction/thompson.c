@@ -161,5 +161,6 @@ State** thompson_construction(char *s) {
   shunting_yard(&s);
   State** nfa = thompson(s);
   number_states(nfa[0]);
+  free(s);
   return nfa;
 }

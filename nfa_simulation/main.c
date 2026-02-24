@@ -46,6 +46,8 @@ void eps_closure(StateSet *s) {
       }
     }
   }
+
+  stack_destroy(st);
 }
 
 StateSet* move(StateSet *s, int c) {
@@ -70,8 +72,10 @@ bool simulate(State* start, State* end, char* str) {
 
   eps_closure(S);
   for (char* p = str; *p; ++p) {
+    StateSet* old = S;
     S = move(S, *p);
     eps_closure(S);
+    free(old);
   }
 
   bool res = stateset_contains(S, end->id);
@@ -96,5 +100,8 @@ int main(int argc, char** argv) {
   for (int i = 0; i < n; ++i) {
     printf("%s %d\n", words[i], simulate(start, end, words[i]));
   }
+
+  nfa_destroy(nfa[0]);
+  free(nfa);
 
 }
