@@ -1,0 +1,30 @@
+digraph DFA {
+  rankdir=LR;
+  n0 [shape=circle, label="n0"];
+  n1 [shape=circle, label="n1"];
+  n2 [shape=circle, label="n2"];
+  n3 [shape=circle, label="n3"];
+  n4 [shape=doublecircle, label="n4"];
+  n5 [shape=doublecircle, label="n5"];
+  n6 [shape=doublecircle, label="n6"];
+  n7 [shape=doublecircle, label="n7"];
+  n8 [shape=doublecircle, label="n8"];
+  n0 -> n1 [label="a"];
+  n0 -> n2 [label="b"];
+  n1 -> n1 [label="a"];
+  n1 -> n3 [label="b"];
+  n2 -> n1 [label="a"];
+  n2 -> n2 [label="b"];
+  n3 -> n1 [label="a"];
+  n3 -> n4 [label="b"];
+  n4 -> n5 [label="a"];
+  n4 -> n6 [label="b"];
+  n5 -> n5 [label="a"];
+  n5 -> n7 [label="b"];
+  n6 -> n5 [label="a"];
+  n6 -> n6 [label="b"];
+  n7 -> n5 [label="a"];
+  n7 -> n8 [label="b"];
+  n8 -> n5 [label="a"];
+  n8 -> n6 [label="b"];
+}
