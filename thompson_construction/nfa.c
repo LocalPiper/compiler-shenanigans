@@ -38,3 +38,12 @@ void nfa_destroy(State *nfa) {
     free(stack[--sp]);
   }
 }
+
+void nfa_destroy_full(State **nfa) {
+  nfa_destroy(nfa[0]);
+  if (nfa[1] && nfa[1] != nfa[0]) {
+    free(nfa[1]);
+  }
+
+  free(nfa);
+}

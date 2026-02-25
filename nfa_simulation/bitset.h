@@ -10,12 +10,9 @@ typedef struct StateSet {
   uint64_t bits[BITSET_WORDS];
 } StateSet;
 
-bool stateset_equal(const StateSet* a, const StateSet* b) {
-  for (int i = 0; i < BITSET_WORDS; ++i) {
-    if (a->bits[i] != b->bits[i]) return false;
-  }
-  return true;
-}
+bool stateset_equal(const StateSet* a, const StateSet* b);
+bool stateset_check_intersection(const StateSet* a, const StateSet* b);
+bool stateset_empty(const StateSet* s);
 
 static inline bool stateset_contains(const StateSet* s, int id) {
   return (s->bits[id / 64] >> (id % 64)) & 1;

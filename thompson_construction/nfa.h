@@ -16,6 +16,6 @@ typedef struct Frag {
 } Frag;
 
 State *state_init(int c, State *out1, State *out2);
-void nfa_destroy(State *nfa);
+void nfa_destroy_full(State **nfa);
 
 #endif // NFA_H

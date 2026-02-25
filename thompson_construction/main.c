@@ -2,7 +2,6 @@
 #include "dot.h"
 #include "thompson.h"
 #include <stdio.h>
-#include <stdlib.h>
 
 int main(int argc, char **argv) {
   if (argc < 2) {
@@ -15,7 +14,6 @@ int main(int argc, char **argv) {
   
   write_dot_file(nfa[0]);
 
-  nfa_destroy(nfa[0]);
-  free(nfa);
+  nfa_destroy_full(nfa);
   return 0;
 }

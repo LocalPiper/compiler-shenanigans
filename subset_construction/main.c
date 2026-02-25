@@ -141,6 +141,7 @@ DFATable* encode_new_states(GenericState* nfa, int num_states) {
         int id = dfa_table_find_state(table, T);
         if (id != -1) {
           entry->char_to_id[c] = id;
+          free(T);
         } else {
           int new_id = dfa_table_add_state(table, T);
           table->table[new_id]->is_final = stateset_check_intersection(T, F);
@@ -149,6 +150,7 @@ DFATable* encode_new_states(GenericState* nfa, int num_states) {
         }
       } else {
         entry->char_to_id[c] = -1;
+        free(T);
       }
 
     }
@@ -183,8 +185,7 @@ int main(int argc, char** argv) {
 
   int num_states = 0;
   DFATable* dfa = encode_new_states(thompson_to_generic(nfa[0], &num_states), num_states);
-  nfa_destroy(nfa[0]);
-  free(nfa);
+  nfa_destroy_full(nfa);
 
   write_dot_file(dfa);
 
