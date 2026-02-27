@@ -1,7 +1,6 @@
 #include "generic_nfa.h"
 #include "../nfa_simulation/bitset.h"
 #include "../thompson_construction/stack.h"
-#include "../thompson_construction/nfa.h"
 #include "../thompson_construction/thompson.h"
 #include "dot.h"
 #include "dfa_table.h"
@@ -11,15 +10,6 @@
 
 #define ALPHABET_SIZE 256
 #define MAX_STATES 1024
-
-State* id_to_state[MAX_STATES];
-
-void fill_list(State *nfa) {
-  if (!nfa || id_to_state[nfa->id]) return;
-  id_to_state[nfa->id] = nfa;
-  fill_list(nfa->out1);
-  fill_list(nfa->out2);
-}
 
 void fill_stack(Stack* st, StateSet *s) {
   for (int word = 0; word < BITSET_WORDS; ++word) {
@@ -39,46 +29,6 @@ StateSet* compute_final_states(GenericState* gs, int num_states) {
     if (gs[i].is_final) stateset_add(final, i);
   }
   return final;
-}
-
-// note: list must be filled
-GenericState* thompson_to_generic(State* nfa, int* num_states_out) {
-  if (!nfa) return NULL;
-
-  int num_states = 0;
-  for (int i = 0; i < MAX_STATES; i++) {
-    if (id_to_state[i]) num_states = i + 1;
-  }
-
-  GenericState* states = calloc(num_states, sizeof(GenericState));
-  for (int i = 0; i < num_states; ++i) {
-    states[i].id = i;
-    states[i].is_final = id_to_state[i]->is_final;
-    states[i].edges = NULL;
-  }
-
-  for (int i = 0; i < num_states; ++i) {
-    State* src = id_to_state[i];
-    
-    if (src->out1) {
-      Edge* e = malloc(sizeof(Edge));
-      e->label = src->c;
-      e->target_id = src->out1->id;
-      e->next = states[i].edges;
-      states[i].edges = e;
-    }
-
-    if (src->out2) {
-      Edge* e = malloc(sizeof(Edge));
-      e->label = src->c;
-      e->target_id = src->out2->id;
-      e->next = states[i].edges;
-      states[i].edges = e;
-    }
-  }
-
-  *num_states_out = num_states;
-  return states;
 }
 
 void eps_closure(GenericState* gs, StateSet *s) {
@@ -117,12 +67,12 @@ StateSet* move(GenericState* gs, StateSet *s, int c) {
   return t;
 }
 
-DFATable* encode_new_states(GenericState* nfa, int num_states) {
+DFATable* encode_new_states(GenericState* nfa, int start_id, int num_states) {
   DFATable* table = dfa_table_init();
   StateSet* F = compute_final_states(nfa, num_states);
 
   StateSet* S = calloc(1, sizeof(StateSet));
-  stateset_add(S, 0);
+  stateset_add(S, start_id);
   eps_closure(nfa, S);
   dfa_table_add_state(table, S);
   table->table[0]->is_final = stateset_check_intersection(S, F);
@@ -157,7 +107,6 @@ DFATable* encode_new_states(GenericState* nfa, int num_states) {
     ++curr_state;
   }
 
-  generic_graph_destroy(nfa, num_states);
   free(F);
   return table;
 }
@@ -180,12 +129,12 @@ int main(int argc, char** argv) {
   char** words = argv + 2;
   int n = argc - 2;
 
-  State** nfa = thompson_construction(regex);
-  fill_list(nfa[0]);
-
   int num_states = 0;
-  DFATable* dfa = encode_new_states(thompson_to_generic(nfa[0], &num_states), num_states);
-  nfa_destroy_full(nfa);
+  int start_state_id = -1;
+  GenericState* nfa = thompson_construction(regex, &num_states, &start_state_id, NULL);
+
+  DFATable* dfa = encode_new_states(nfa, start_state_id, num_states);
+  generic_graph_destroy(nfa, num_states);
 
   write_dot_file(dfa);
 

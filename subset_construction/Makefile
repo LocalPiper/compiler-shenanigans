@@ -6,7 +6,6 @@ SRC = \
   generic_nfa.c \
   ../nfa_simulation/bitset.c \
   ../thompson_construction/stack.c \
-  ../thompson_construction/nfa.c \
   ../thompson_construction/thompson.c \
   dfa_table.c \
   dot.c \
