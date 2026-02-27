@@ -6,7 +6,7 @@ TARGET  = a.out
 SRC = \
   ../thompson_construction/thompson.c \
   ../thompson_construction/stack.c \
-  ../thompson_construction/nfa.c \
+	../subset_construction/generic_nfa.c \
   main.c
 
 OBJ = $(SRC:.c=.o)

@@ -203,6 +203,7 @@ GenericState* thompson(const char *s, int* num_states_out, int* start_out, int* 
 }
 
 GenericState* thompson_construction(char *s, int* num_states_out, int* start_out, int* end_out) {
+  if (!strlen(s)) return NULL;
   explicit_concatenation(&s);
   shunting_yard(&s);
   GenericState* nfa = thompson(s, num_states_out, start_out, end_out);

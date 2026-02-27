@@ -13,7 +13,7 @@ int main(int argc, char **argv) {
   char *regex = argv[1];
   int n = 0;
   GenericState *nfa = thompson_construction(regex, &n, NULL, NULL);
-  
+  if (!nfa) return 0; 
   write_dot_file(nfa, n);
 
   for (int i = 0; i < 1024; ++i) {

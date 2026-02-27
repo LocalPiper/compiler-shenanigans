@@ -1,19 +1,10 @@
-#include "../thompson_construction/nfa.h"
 #include "../thompson_construction/thompson.h"
 #include "../thompson_construction/stack.h"
+#include "../subset_construction/generic_nfa.h"
 #include "bitset.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
-
-State* id_to_state[1024];
-
-void fill_list(State *nfa) {
-  if (!nfa || id_to_state[nfa->id]) return;
-  id_to_state[nfa->id] = nfa;
-  fill_list(nfa->out1);
-  fill_list(nfa->out2);
-}
 
 void fill_stack(Stack* st, StateSet *s) {
   for (int word = 0; word < BITSET_WORDS; ++word) {
@@ -27,22 +18,17 @@ void fill_stack(Stack* st, StateSet *s) {
   }
 }
 
-void eps_closure(StateSet *s) {
+void eps_closure(GenericState* gs, StateSet *s) {
   Stack* st = stack_init();
   fill_stack(st, s);
   
   while (!stack_empty(st)) {
-    State* t = id_to_state[stack_pop(st)];
-    if (t->c == -1) {
-      State* u = t->out1;
-      if (u && !stateset_contains(s, u->id)) {
-        stateset_add(s, u->id);
-        stack_push(st, u->id);
-      }
-      u = t->out2;
-      if (u && !stateset_contains(s, u->id)) {
-        stateset_add(s, u->id);
-        stack_push(st, u->id);
+    GenericState* state = &gs[stack_pop(st)];
+
+    for (Edge* e = state->edges; e != NULL; e = e->next) {
+      if (e->label == -1 && !stateset_contains(s, e->target_id)) {
+        stateset_add(s, e->target_id);
+        stack_push(st, e->target_id);
       }
     }
   }
@@ -50,15 +36,18 @@ void eps_closure(StateSet *s) {
   stack_destroy(st);
 }
 
-StateSet* move(StateSet *s, int c) {
+
+StateSet* move(GenericState* gs, StateSet *s, int c) {
   StateSet* t = calloc(1, sizeof(StateSet));
   for (int word = 0; word < BITSET_WORDS; ++word) {
     uint64_t bits = s->bits[word];
     while (bits != 0) {
       int bitpos = __builtin_ctzll(bits);
       int state_id = word * 64 + bitpos;
-      State* u = id_to_state[state_id];
-      if (u->c == c) stateset_add(t, u->out1->id);
+      GenericState* state = &gs[state_id];
+      for (Edge* e = state->edges; e != NULL; e = e->next) {
+        if (e->label == c) stateset_add(t, e->target_id);
+      }
       bits ^= (1LL << bitpos);
     }
   }
@@ -66,19 +55,19 @@ StateSet* move(StateSet *s, int c) {
   return t;
 }
 
-bool simulate(State* start, State* end, char* str) {
+bool simulate(GenericState* gs, int start_id, int end_id, char* str) {
   StateSet *S = calloc(1, sizeof(StateSet));
-  stateset_add(S, start->id);
+  stateset_add(S, start_id);
 
-  eps_closure(S);
+  eps_closure(gs, S);
   for (char* p = str; *p; ++p) {
     StateSet* old = S;
-    S = move(S, *p);
-    eps_closure(S);
+    S = move(gs, S, *p);
+    eps_closure(gs, S);
     free(old);
   }
 
-  bool res = stateset_contains(S, end->id);
+  bool res = stateset_contains(S, end_id);
   free(S);
   return res;
 }
@@ -92,16 +81,15 @@ int main(int argc, char** argv) {
   char** words = argv + 2;
   int n = argc - 2;
 
-  State** nfa = thompson_construction(regex);
-  State *start = nfa[0], *end = nfa[1];
-
-  fill_list(start);
-
+  int num_states = 0, start_id = 0, end_id = 0;
+  GenericState* nfa = thompson_construction(regex, &num_states, &start_id, &end_id);
+  if (!nfa) {
+    fprintf(stderr, "Provided empty regex\n");
+    return 1;
+  }
   for (int i = 0; i < n; ++i) {
-    printf("%s %d\n", words[i], simulate(start, end, words[i]));
+    printf("%s %d\n", words[i], simulate(nfa, start_id, end_id, words[i]));
   }
 
-  nfa_destroy(nfa[0]);
-  free(nfa);
-
+  generic_graph_destroy(nfa, num_states);
 }

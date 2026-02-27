@@ -132,7 +132,10 @@ int main(int argc, char** argv) {
   int num_states = 0;
   int start_state_id = -1;
   GenericState* nfa = thompson_construction(regex, &num_states, &start_state_id, NULL);
-
+  if (!nfa) {
+    fprintf(stderr, "Provided empty regex\n");
+    return 1;
+  }
   DFATable* dfa = encode_new_states(nfa, start_state_id, num_states);
   generic_graph_destroy(nfa, num_states);
 
