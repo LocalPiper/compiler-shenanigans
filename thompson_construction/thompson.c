@@ -1,6 +1,5 @@
 #include "thompson.h"
 #include "stack.h"
-#include "nfa.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -83,84 +82,130 @@ void shunting_yard(char **ps) {
   *ps = res;
 }
 
-Frag frag_stack[1024];
-int fsp = 0;
+typedef struct Fluke {
+  int in1;
+  int in2;
+} Fluke;
 
-void push(Frag f) { frag_stack[fsp++] = f; }
-Frag pop() { return frag_stack[--fsp]; }
+typedef struct Frag {
+  int in;
+  Fluke* out;
+} Frag;
 
+static Frag frag_stack[1024];
+static int fsp = 0;
 
-State **thompson(const char *s) {
+static void push(Frag f) { frag_stack[fsp++] = f; }
+static Frag pop() { return frag_stack[--fsp]; }
+
+static int gstate_count = 0;
+
+static int new_state(GenericState* gstates) {
+  int id = gstate_count++;
+  gstates[id].id = id;
+  gstates[id].is_final = false;
+  gstates[id].edges = NULL;
+  return id;
+}
+
+static Fluke* new_fluke(int* in1, int* in2) {
+  Fluke* fluke = calloc(1, sizeof(Fluke));
+  fluke->in1 = (in1)? *in1 : -1;
+  fluke->in2 = (in2)? *in2 : -1;
+  return fluke;
+}
+
+static void add_egde(GenericState* gstates, int id, int label, int target_id) {
+  Edge *e = calloc(1, sizeof(Edge));
+  e->label = label;
+  e->target_id = target_id;
+  e->next = gstates[id].edges;
+  gstates[id].edges = e;
+}
+
+static void replace_fluke(GenericState* gstates, Fluke* old_end, int new_end) {
+  // flukes may contain ids of nodes that point to them (thompson guarantees no more than 2)
+  // thompson also guarantees that any node has no more than 2 outgoing edges
+  // check for backreferences and remap edges
+  if (old_end->in1 != -1) {
+    GenericState* state = &gstates[old_end->in1];
+    for (Edge* e = state->edges; e != NULL; e = e->next) {
+      if (e->target_id == -1) {
+        e->target_id = new_end; break;
+      }
+    }
+  }
+  if (old_end->in2 != -1) {
+    GenericState* state = &gstates[old_end->in2];
+    for (Edge* e = state->edges; e != NULL; e = e->next) {
+      if (e->target_id == -1) {
+        e->target_id = new_end; break;
+      }
+    }
+  }
+  // fluke is no longer needed
+  free(old_end);
+}
+
+GenericState* thompson(const char *s, int* num_states_out, int* start_out, int* end_out) {
+  GenericState* gstates = calloc(1024, sizeof(GenericState));
+  gstate_count = 0;
   fsp = 0;
+
   for (const char *p = s; *p; ++p) {
     char tok = *p;
     if (is_literal(tok)) {
-      State *start = state_init(tok, NULL, NULL);
-      State *accept = state_init(0, NULL, NULL);
-      start->out1 = accept;
-      push((Frag){start, accept});
+      int start = new_state(gstates);
+      Fluke* end = new_fluke(&start, NULL);
+      add_egde(gstates, start, tok, -1); // have to add edge to nowhere in order to save token data
+      push((Frag){start, end});
     } else if (tok == '.') {
       Frag f2 = pop();
       Frag f1 = pop();
-      f1.out->out1 = f2.start->out1;
-      f1.out->out2 = f2.start->out2;
-      f1.out->c = f2.start->c;
-      free(f2.start);
-      push((Frag){f1.start, f2.out});
+      replace_fluke(gstates, f1.out, f2.in);
+      push((Frag){f1.in, f2.out});
     } else if (tok == '|') {
       Frag f2 = pop();
       Frag f1 = pop();
-      State *split = state_init(EPSILON, f1.start, f2.start);
-      State *join = state_init(0, NULL, NULL);
-      f1.out->c = EPSILON;
-      f1.out->out1 = join;
-      f2.out->c = EPSILON;
-      f2.out->out1 = join;
+      int split = new_state(gstates);
+      add_egde(gstates, split, EPSILON, f1.in);
+      add_egde(gstates, split, EPSILON, f2.in);
+      int end1 = new_state(gstates);
+      int end2 = new_state(gstates);
+      replace_fluke(gstates, f1.out, end1);
+      replace_fluke(gstates, f2.out, end2);
+      add_egde(gstates, end1, EPSILON, -1);
+      add_egde(gstates, end2, EPSILON, -1);
+      Fluke* join = new_fluke(&end1, &end2);
       push((Frag){split, join});
     } else if (tok == '*') {
       Frag f = pop();
-      State *join = state_init(0, NULL, NULL);
-      State *split = state_init(EPSILON, f.start, join);
-      f.out->c = EPSILON;
-      f.out->out1 = f.start;
-      f.out->out2 = join;
+      int split = new_state(gstates);
+      int end = new_state(gstates);
+      replace_fluke(gstates,f.out, end);
+      add_egde(gstates, split, EPSILON, f.in);
+      add_egde(gstates, split, EPSILON, -1);
+      add_egde(gstates, end, EPSILON, f.in);
+      add_egde(gstates, end, EPSILON, -1);
+      Fluke* join = new_fluke(&split, &end);
       push((Frag){split, join});
     }
   }
   Frag final_frag = pop();
-  final_frag.out->is_final = true;
-  State** res = malloc(2 * sizeof(State*));
-  res[0] = final_frag.start;
-  res[1] = final_frag.out;
-  return res;
+  int end = new_state(gstates);
+  replace_fluke(gstates, final_frag.out, end);
+  gstates[end].is_final = true;
+
+  if (num_states_out) *num_states_out = gstate_count;
+  if (start_out) *start_out = final_frag.in;
+  if (end_out) *end_out = end;
+  return gstates;
 }
 
-void number_states(State *nfa) {
-  int id = 0;
-  State *state_stack[1024];
-  int sp = 0;
-
-  state_stack[sp++] = nfa;
-
-  while (sp) {
-    State *s = state_stack[--sp];
-    if (s->id != -1)
-      continue;
-
-    s->id = id++;
-
-    if (s->out1)
-      state_stack[sp++] = s->out1;
-    if (s->out2)
-      state_stack[sp++] = s->out2;
-  }
-}
-
-State** thompson_construction(char *s) {
+GenericState* thompson_construction(char *s, int* num_states_out, int* start_out, int* end_out) {
   explicit_concatenation(&s);
   shunting_yard(&s);
-  State** nfa = thompson(s);
-  number_states(nfa[0]);
+  GenericState* nfa = thompson(s, num_states_out, start_out, end_out);
   free(s);
   return nfa;
 }

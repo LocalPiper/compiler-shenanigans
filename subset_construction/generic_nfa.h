@@ -1,6 +1,5 @@
 #ifndef GENERIC_NFA_H
 #define GENERIC_NFA_H
-#include "../thompson_construction/nfa.h"
 #include <stdbool.h>
 
 typedef struct GenericState {

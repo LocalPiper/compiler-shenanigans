@@ -1,7 +1,8 @@
-#include "nfa.h"
 #include "dot.h"
 #include "thompson.h"
+#include "../subset_construction/generic_nfa.h"
 #include <stdio.h>
+#include <stdlib.h>
 
 int main(int argc, char **argv) {
   if (argc < 2) {
@@ -10,10 +11,20 @@ int main(int argc, char **argv) {
   }
 
   char *regex = argv[1];
-  State **nfa = thompson_construction(regex);
+  int n = 0;
+  GenericState *nfa = thompson_construction(regex, &n, NULL, NULL);
   
-  write_dot_file(nfa[0]);
+  write_dot_file(nfa, n);
 
-  nfa_destroy_full(nfa);
+  for (int i = 0; i < 1024; ++i) {
+    Edge* e = nfa[i].edges;
+    while (e) {
+      Edge* next = e->next;
+      free(e);
+      e = next;
+    }
+  }
+  free(nfa);
+
   return 0;
 }

@@ -1,7 +1,7 @@
 #ifndef THOMPSON_H
 #define THOMPSON_H
-#include "nfa.h"
+#include "../subset_construction/generic_nfa.h"
 
-State** thompson_construction(char* s);
+GenericState* thompson_construction(char *s, int* num_states_out, int* start_out, int* end_out);
 
 #endif // THOMPSON_H
