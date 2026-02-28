@@ -1,7 +1,6 @@
-#include "generic_nfa.h"
-#include "../nfa_simulation/bitset.h"
-#include "../thompson_construction/stack.h"
-#include "../thompson_construction/thompson.h"
+#include "automaton.h"
+#include "bitset.h"
+#include "thompson.h"
 #include "dot.h"
 #include "dfa_table.h"
 #include <stdio.h>
@@ -11,19 +10,7 @@
 #define ALPHABET_SIZE 256
 #define MAX_STATES 1024
 
-void fill_stack(Stack* st, StateSet *s) {
-  for (int word = 0; word < BITSET_WORDS; ++word) {
-    uint64_t bits = s->bits[word];
-    while (bits != 0) {
-      int bitpos = __builtin_ctzll(bits);
-      int state_id = word * 64 + bitpos;
-      stack_push(st, state_id);
-      bits ^= (1LL << bitpos);
-    }
-  }
-}
-
-StateSet* compute_final_states(GenericState* gs, int num_states) {
+StateSet* compute_final_states(AutomatonNode* gs, int num_states) {
   StateSet* final = calloc(1, sizeof(StateSet));
   for (int i = 0; i < num_states; ++i) {
     if (gs[i].is_final) stateset_add(final, i);
@@ -31,43 +18,7 @@ StateSet* compute_final_states(GenericState* gs, int num_states) {
   return final;
 }
 
-void eps_closure(GenericState* gs, StateSet *s) {
-  Stack* st = stack_init();
-  fill_stack(st, s);
-  
-  while (!stack_empty(st)) {
-    GenericState* state = &gs[stack_pop(st)];
-
-    for (Edge* e = state->edges; e != NULL; e = e->next) {
-      if (e->label == -1 && !stateset_contains(s, e->target_id)) {
-        stateset_add(s, e->target_id);
-        stack_push(st, e->target_id);
-      }
-    }
-  }
-
-  stack_destroy(st);
-}
-
-StateSet* move(GenericState* gs, StateSet *s, int c) {
-  StateSet* t = calloc(1, sizeof(StateSet));
-  for (int word = 0; word < BITSET_WORDS; ++word) {
-    uint64_t bits = s->bits[word];
-    while (bits != 0) {
-      int bitpos = __builtin_ctzll(bits);
-      int state_id = word * 64 + bitpos;
-      GenericState* state = &gs[state_id];
-      for (Edge* e = state->edges; e != NULL; e = e->next) {
-        if (e->label == c) stateset_add(t, e->target_id);
-      }
-      bits ^= (1LL << bitpos);
-    }
-  }
-
-  return t;
-}
-
-DFATable* encode_new_states(GenericState* nfa, int start_id, int num_states) {
+DFATable* encode_new_states(AutomatonNode* nfa, int start_id, int num_states) {
   DFATable* table = dfa_table_init();
   StateSet* F = compute_final_states(nfa, num_states);
 
@@ -92,7 +43,7 @@ DFATable* encode_new_states(GenericState* nfa, int start_id, int num_states) {
         if (id != -1) {
           entry->char_to_id[c] = id;
           free(T);
-        } else {
+        } else { // go go gadget ownership transfer
           int new_id = dfa_table_add_state(table, T);
           table->table[new_id]->is_final = stateset_check_intersection(T, F);
           entry->char_to_id[c] = new_id;
@@ -131,13 +82,13 @@ int main(int argc, char** argv) {
 
   int num_states = 0;
   int start_state_id = -1;
-  GenericState* nfa = thompson_construction(regex, &num_states, &start_state_id, NULL);
+  AutomatonNode* nfa = thompson_construction(regex, &num_states, &start_state_id, NULL);
   if (!nfa) {
     fprintf(stderr, "Provided empty regex\n");
     return 1;
   }
   DFATable* dfa = encode_new_states(nfa, start_state_id, num_states);
-  generic_graph_destroy(nfa, num_states);
+  automaton_destroy(nfa, num_states);
 
   write_dot_file(dfa);
 

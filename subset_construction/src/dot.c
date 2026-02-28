@@ -1,4 +1,5 @@
 #include "dot.h"
+#include "dfa_table.h"
 #include <stdbool.h>
 #include <stdio.h>
 

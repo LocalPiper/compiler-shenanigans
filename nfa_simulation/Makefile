@@ -1,5 +1,5 @@
 CC = clang
-CFLAGS = -g -Wall -Wextra -std=c11 -I../structs/include -I../thompson_construction/include -Iinclude
+CFLAGS = -g -Wall -Wextra -std=c11 -Iinclude -I../structs/include -I../thompson_construction/include
 LDFLAGS = -L../structs/libs -lstructs -L../thompson_construction/libs -lthompson
 TARGET = bin/simulate
 SRCS = $(wildcard src/*.c)

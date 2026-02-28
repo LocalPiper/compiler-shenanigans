@@ -1,26 +1,23 @@
-CC      = clang
-CFLAGS  = -g -Wall -Wextra -std=c11
-TARGET  = a.out
-
-SRC = \
-  generic_nfa.c \
-  ../nfa_simulation/bitset.c \
-  ../thompson_construction/stack.c \
-  ../thompson_construction/thompson.c \
-  dfa_table.c \
-  dot.c \
-  main.c
-
-OBJ = $(SRC:.c=.o)
+CC = clang
+CFLAGS = -g -Wall -Wextra -std=c11 -Iinclude -I../structs/include -I../thompson_construction/include
+LDFLAGS = -L../structs/libs -lstructs -L../thompson_construction/libs -lthompson
+TARGET = bin/to_dfa
+SRCS = $(wildcard src/*.c)
+OBJS = $(patsubst src/%.c,build/%.o,$(SRCS))
 
 all: $(TARGET)
 
-$(TARGET): $(OBJ)
-	$(CC) $(CFLAGS) -o $@ $(OBJ)
+$(TARGET): $(OBJS) | bin
+	$(CC) $(OBJS) $(LDFLAGS) -o $@
 
-%.o: %.c
+build/%.o: src/%.c | build
 	$(CC) $(CFLAGS) -c $< -o $@
 
+bin build:
+	mkdir -p $@
+
 clean:
-	rm -f $(OBJ) $(TARGET)
+	rm -rf build/ bin/ output.dot output.png
+
+.PHONY: all clean
 

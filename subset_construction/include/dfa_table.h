@@ -1,6 +1,6 @@
 #ifndef DFA_TABLE
 #define DFA_TABLE
-#include "../nfa_simulation/bitset.h"
+#include "bitset.h"
 #include <stdlib.h>
 #include <string.h>
 
