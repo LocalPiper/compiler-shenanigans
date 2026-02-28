@@ -1,5 +1,5 @@
-#ifndef DFA_TABLE
-#define DFA_TABLE
+#ifndef DFA_TABLE_H
+#define DFA_TABLE_H
 #include "bitset.h"
 #include <stdlib.h>
 #include <string.h>
@@ -21,4 +21,4 @@ int dfa_table_find_state(DFATable* dfatable, StateSet* nfa_states);
 int dfa_table_add_state(DFATable* dfatable, StateSet* nfa_states);
 void dfa_table_destroy(DFATable* dfatable);
 
-#endif // DFA_TABLE
+#endif // DFA_TABLE_H
