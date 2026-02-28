@@ -15,15 +15,15 @@ const char *get_label(int c) {
   return NULL;
 }
 
-void emit_nfa(const GenericState *nfa, int num_states, FILE *out) {
+void emit_nfa(const AutomatonNode *nfa, int num_states, FILE *out) {
   for (int i = 0; i < num_states; ++i) {
     fprintf(out, "  n%d [shape=%s, label=\"n%d\"];\n", nfa[i].id, nfa[i].is_final? "doublecircle" : "circle", nfa[i].id);
   }
 
   for (int i = 0; i < num_states; ++i) {
-    Edge* e = nfa[i].edges;
+    AutomatonEdge* e = nfa[i].edges;
     while (e) {
-      Edge* next = e->next;
+      AutomatonEdge* next = e->next;
       const char *label = get_label(e->label);
       fprintf(out, "  n%d -> n%d [label=\"%s\"];\n", nfa[i].id, e->target_id, label);
       e = next;
@@ -31,7 +31,7 @@ void emit_nfa(const GenericState *nfa, int num_states, FILE *out) {
   }
 }
 
-void write_dot(const GenericState *nfa, int num_states, FILE *out) {
+void write_dot(const AutomatonNode *nfa, int num_states, FILE *out) {
   fprintf(out, "digraph DFA {\n");
   fprintf(out, "  rankdir=LR;\n");
 
@@ -40,7 +40,7 @@ void write_dot(const GenericState *nfa, int num_states, FILE *out) {
   fprintf(out, "}\n");
 }
 
-void write_dot_file(const GenericState *nfa, int num_states) {
+void write_dot_file(const AutomatonNode *nfa, int num_states) {
   FILE *file = fopen("output.dot", "w+");
   if (!file) {
     perror("fopen()");

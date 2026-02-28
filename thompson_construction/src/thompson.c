@@ -98,13 +98,13 @@ static int fsp = 0;
 static void push(Frag f) { frag_stack[fsp++] = f; }
 static Frag pop() { return frag_stack[--fsp]; }
 
-static int gstate_count = 0;
+static int state_count = 0;
 
-static int new_state(GenericState* gstates) {
-  int id = gstate_count++;
-  gstates[id].id = id;
-  gstates[id].is_final = false;
-  gstates[id].edges = NULL;
+static int new_state(AutomatonNode* states) {
+  int id = state_count++;
+  states[id].id = id;
+  states[id].is_final = false;
+  states[id].edges = NULL;
   return id;
 }
 
@@ -115,29 +115,29 @@ static Fluke* new_fluke(int* in1, int* in2) {
   return fluke;
 }
 
-static void add_egde(GenericState* gstates, int id, int label, int target_id) {
-  Edge *e = calloc(1, sizeof(Edge));
+static void add_egde(AutomatonNode* states, int id, int label, int target_id) {
+  AutomatonEdge *e = calloc(1, sizeof(AutomatonEdge));
   e->label = label;
   e->target_id = target_id;
-  e->next = gstates[id].edges;
-  gstates[id].edges = e;
+  e->next = states[id].edges;
+  states[id].edges = e;
 }
 
-static void replace_fluke(GenericState* gstates, Fluke* old_end, int new_end) {
+static void replace_fluke(AutomatonNode* states, Fluke* old_end, int new_end) {
   // flukes may contain ids of nodes that point to them (thompson guarantees no more than 2)
   // thompson also guarantees that any node has no more than 2 outgoing edges
   // check for backreferences and remap edges
   if (old_end->in1 != -1) {
-    GenericState* state = &gstates[old_end->in1];
-    for (Edge* e = state->edges; e != NULL; e = e->next) {
+    AutomatonNode* state = &states[old_end->in1];
+    for (AutomatonEdge* e = state->edges; e != NULL; e = e->next) {
       if (e->target_id == -1) {
         e->target_id = new_end; break;
       }
     }
   }
   if (old_end->in2 != -1) {
-    GenericState* state = &gstates[old_end->in2];
-    for (Edge* e = state->edges; e != NULL; e = e->next) {
+    AutomatonNode* state = &states[old_end->in2];
+    for (AutomatonEdge* e = state->edges; e != NULL; e = e->next) {
       if (e->target_id == -1) {
         e->target_id = new_end; break;
       }
@@ -147,66 +147,66 @@ static void replace_fluke(GenericState* gstates, Fluke* old_end, int new_end) {
   free(old_end);
 }
 
-GenericState* thompson(const char *s, int* num_states_out, int* start_out, int* end_out) {
-  GenericState* gstates = calloc(1024, sizeof(GenericState));
-  gstate_count = 0;
+AutomatonNode* thompson(const char *s, int* num_states_out, int* start_out, int* end_out) {
+  AutomatonNode* states = calloc(1024, sizeof(AutomatonNode));
+  state_count = 0;
   fsp = 0;
 
   for (const char *p = s; *p; ++p) {
     char tok = *p;
     if (is_literal(tok)) {
-      int start = new_state(gstates);
+      int start = new_state(states);
       Fluke* end = new_fluke(&start, NULL);
-      add_egde(gstates, start, tok, -1); // have to add edge to nowhere in order to save token data
+      add_egde(states, start, tok, -1); // have to add edge to nowhere in order to save token data
       push((Frag){start, end});
     } else if (tok == '.') {
       Frag f2 = pop();
       Frag f1 = pop();
-      replace_fluke(gstates, f1.out, f2.in);
+      replace_fluke(states, f1.out, f2.in);
       push((Frag){f1.in, f2.out});
     } else if (tok == '|') {
       Frag f2 = pop();
       Frag f1 = pop();
-      int split = new_state(gstates);
-      add_egde(gstates, split, EPSILON, f1.in);
-      add_egde(gstates, split, EPSILON, f2.in);
-      int end1 = new_state(gstates);
-      int end2 = new_state(gstates);
-      replace_fluke(gstates, f1.out, end1);
-      replace_fluke(gstates, f2.out, end2);
-      add_egde(gstates, end1, EPSILON, -1);
-      add_egde(gstates, end2, EPSILON, -1);
+      int split = new_state(states);
+      add_egde(states, split, EPSILON, f1.in);
+      add_egde(states, split, EPSILON, f2.in);
+      int end1 = new_state(states);
+      int end2 = new_state(states);
+      replace_fluke(states, f1.out, end1);
+      replace_fluke(states, f2.out, end2);
+      add_egde(states, end1, EPSILON, -1);
+      add_egde(states, end2, EPSILON, -1);
       Fluke* join = new_fluke(&end1, &end2);
       push((Frag){split, join});
     } else if (tok == '*') {
       Frag f = pop();
-      int split = new_state(gstates);
-      int end = new_state(gstates);
-      replace_fluke(gstates,f.out, end);
-      add_egde(gstates, split, EPSILON, f.in);
-      add_egde(gstates, split, EPSILON, -1);
-      add_egde(gstates, end, EPSILON, f.in);
-      add_egde(gstates, end, EPSILON, -1);
+      int split = new_state(states);
+      int end = new_state(states);
+      replace_fluke(states,f.out, end);
+      add_egde(states, split, EPSILON, f.in);
+      add_egde(states, split, EPSILON, -1);
+      add_egde(states, end, EPSILON, f.in);
+      add_egde(states, end, EPSILON, -1);
       Fluke* join = new_fluke(&split, &end);
       push((Frag){split, join});
     }
   }
   Frag final_frag = pop();
-  int end = new_state(gstates);
-  replace_fluke(gstates, final_frag.out, end);
-  gstates[end].is_final = true;
+  int end = new_state(states);
+  replace_fluke(states, final_frag.out, end);
+  states[end].is_final = true;
 
-  if (num_states_out) *num_states_out = gstate_count;
+  if (num_states_out) *num_states_out = state_count;
   if (start_out) *start_out = final_frag.in;
   if (end_out) *end_out = end;
-  return gstates;
+  return states;
 }
 
-GenericState* thompson_construction(char *s, int* num_states_out, int* start_out, int* end_out) {
+AutomatonNode* thompson_construction(char *s, int* num_states_out, int* start_out, int* end_out) {
   if (!strlen(s)) return NULL;
   explicit_concatenation(&s);
   shunting_yard(&s);
-  GenericState* nfa = thompson(s, num_states_out, start_out, end_out);
+  AutomatonNode* nfa = thompson(s, num_states_out, start_out, end_out);
   free(s);
   return nfa;
 }
