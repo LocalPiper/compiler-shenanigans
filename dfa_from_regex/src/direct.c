@@ -111,6 +111,7 @@ AutomatonNode* fast_dfa(char* regex, int* n_out) {
   DFATable* table = tree_to_dfa_table(tree, index_to_id, root_idx, root_idx - 1, followpos);
   AutomatonNode* dfa = dfa_table_to_dfa(table, n_out);
 
+  free(regex);
   free(tree);
   free(followpos);
   free(index_to_id);
