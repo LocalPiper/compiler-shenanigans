@@ -24,3 +24,9 @@ bool stateset_empty(const StateSet* s) {
   }
   return true;
 }
+
+void stateset_update(StateSet* a, const StateSet* b) {
+  for (int i = 0; i < BITSET_WORDS; ++i) {
+    a->bits[i] |= b->bits[i];
+  }
+}

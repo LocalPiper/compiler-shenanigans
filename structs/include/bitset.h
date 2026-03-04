@@ -13,6 +13,7 @@ typedef struct StateSet {
 bool stateset_equal(const StateSet* a, const StateSet* b);
 bool stateset_check_intersection(const StateSet* a, const StateSet* b);
 bool stateset_empty(const StateSet* s);
+void stateset_update(StateSet* a, const StateSet* b);
 
 static inline bool stateset_contains(const StateSet* s, int id) {
   return (s->bits[id / 64] >> (id % 64)) & 1;
