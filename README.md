@@ -1,3 +1,3 @@
 plans for the repo
 - finish Hopkroft
-- add TIP parser with type constraint unificator
+- add TIL parser with type constraint unificator
