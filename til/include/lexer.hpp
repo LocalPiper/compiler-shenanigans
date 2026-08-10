@@ -17,6 +17,7 @@ enum class TokenType {
   Ampersand,
   Greater,
   Dot,
+  Comma,
   Colon,
   Semicolon,
   Equal,
@@ -57,4 +58,7 @@ private:
   Token readIdentifier();
   Token readOperator();
 };
+
+const std::string tokenName(lexer::TokenType type);
+
 } // namespace lexer

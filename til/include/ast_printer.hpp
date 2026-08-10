@@ -1,9 +1,11 @@
 #pragma once
 #include "ast.hpp"
+#include "lexer.hpp"
 #include <iostream>
 
 namespace ast_printer {
 
+using namespace ast;
 class Printer : public Visitor {
 public:
   void visit(Number &node) override {
@@ -11,18 +13,18 @@ public:
   }
 
   void visit(Identifier &node) override {
-    std::cout << "Identifier(" << node.value << ")";
+    std::cout << "Identifier(" << node.name << ")";
   }
 
   void visit(UnaryExpr &node) override {
-    std::cout << "UnaryExpr(" << tokenName(node.op) << ")\n";
+    std::cout << "UnaryExpr(" << lexer::tokenName(node.op) << ")\n";
     ++indent;
     print(node.right);
     --indent;
   }
 
   void visit(BinaryExpr &node) override {
-    std::cout << "BinaryExpr(" << tokenName(node.op) << ")\n";
+    std::cout << "BinaryExpr(" << lexer::tokenName(node.op) << ")\n";
     ++indent;
     print(node.left);
     std::cout << '\n';
@@ -59,8 +61,10 @@ public:
         printIndent();
         std::cout << "Identifier(" << param << ")";
       }
-      std::cout << "\n)";
+      std::cout << '\n';
       --indent;
+      printIndent();
+      std::cout << ')';
     }
 
     if (!node.variables.empty()) {
@@ -74,8 +78,10 @@ public:
         printIndent();
         std::cout << "Identifier(" << var << ")";
       }
-      std::cout << "\n)";
+      std::cout << '\n';
       --indent;
+      printIndent();
+      std::cout << ')';
     }
 
     for (const auto &stmt : node.statements) {
@@ -107,9 +113,9 @@ public:
 private:
   int indent = 0;
 
-  void print(const std::unique_ptr<Node> &node) {
+  template <typename T> void print(const std::unique_ptr<T> &node) {
     printIndent();
-    node.accept(*node);
+    print(*node);
   }
 
   void printIndent() { std::cout << std::string(2 * indent, ' '); }

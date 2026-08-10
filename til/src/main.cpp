@@ -1,3 +1,4 @@
+#include "ast_printer.hpp"
 #include "lexer.hpp"
 #include "parser.hpp"
 #include <iostream>
@@ -12,5 +13,9 @@ int main() {
     parser.addTokens(lexer.tokenize());
   }
 
+  parser.addTokens({{lexer::TokenType::End, ""}});
+  auto ast = parser.parse();
+  ast_printer::Printer printer;
+  printer.print(*ast);
   return 0;
 }

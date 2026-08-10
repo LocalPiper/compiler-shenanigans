@@ -9,14 +9,14 @@
 namespace {
 using namespace lexer;
 const std::unordered_map<std::string, TokenType> operators = {
-    {"+", TokenType::Plus},       {"-", TokenType::Minus},
-    {"*", TokenType::Star},       {"/", TokenType::Slash},
-    {">", TokenType::Greater},    {"&", TokenType::Ampersand},
-    {":", TokenType::Colon},      {";", TokenType::Semicolon},
-    {".", TokenType::Dot},        {"(", TokenType::LeftParen},
-    {")", TokenType::RightParen}, {"{", TokenType::LeftBrace},
-    {"}", TokenType::RightBrace}, {"=", TokenType::Assign},
-    {"==", TokenType::Equal}};
+    {"+", TokenType::Plus},      {"-", TokenType::Minus},
+    {"*", TokenType::Star},      {"/", TokenType::Slash},
+    {">", TokenType::Greater},   {"&", TokenType::Ampersand},
+    {":", TokenType::Colon},     {";", TokenType::Semicolon},
+    {".", TokenType::Dot},       {",", TokenType::Comma},
+    {"(", TokenType::LeftParen}, {")", TokenType::RightParen},
+    {"{", TokenType::LeftBrace}, {"}", TokenType::RightBrace},
+    {"=", TokenType::Assign},    {"==", TokenType::Equal}};
 
 const std::unordered_map<std::string, TokenType> keywords = {
     {"var", TokenType::Var},       {"input", TokenType::Input},
@@ -26,6 +26,23 @@ const std::unordered_map<std::string, TokenType> keywords = {
 
 } // namespace
 namespace lexer {
+
+std::unordered_map<TokenType, std::string> getTokenMap() {
+  std::unordered_map<TokenType, std::string> mp;
+  for (auto [s, t] : operators)
+    mp[t] = s;
+  for (auto [s, t] : keywords)
+    mp[t] = s;
+  return mp;
+}
+
+const std::string tokenName(TokenType token) {
+  static std::unordered_map<TokenType, std::string> mp = getTokenMap();
+  auto it = mp.find(token);
+  if (it == mp.end())
+    throw std::runtime_error("No token for given type");
+  return it->second;
+}
 
 void Lexer::setSource(std::string source) {
   this->source = std::move(source);

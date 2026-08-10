@@ -1,10 +1,7 @@
-iterate(n) {
-    var f;
-    f = 1;
-    while (n > 0) {
-        f = f * n;
-        n = n - 1;
-    }
-
-    return f;
+main () {
+    var a, b, c;
+    a = 0;
+    b = 0;
+    c = 0;
+    return c;
 }

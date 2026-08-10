@@ -15,14 +15,20 @@ private:
   std::vector<lexer::Token> tokens;
   std::size_t pos = 0;
 
+  const lexer::Token &current() const;
+  const lexer::Token &consume(lexer::TokenType type);
+  bool match(lexer::TokenType type);
+  bool check(lexer::TokenType type) const;
+
   std::unique_ptr<ast::Function> parseFunction();
   std::unique_ptr<ast::Stmt> parseStatement();
-  std::unique_ptr<ast::Expr> parseExpression();
 
-  std::unique_ptr<ast::Expr> parseEqualty();
+  std::unique_ptr<ast::Expr> parseExpression();
+  std::unique_ptr<ast::Expr> parseEquality();
   std::unique_ptr<ast::Expr> parseComparison();
   std::unique_ptr<ast::Expr> parseTerm();
   std::unique_ptr<ast::Expr> parseFactor();
+  std::unique_ptr<ast::Expr> parseUnary();
   std::unique_ptr<ast::Expr> parsePrimary();
 };
 } // namespace parser
