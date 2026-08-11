@@ -1,7 +1,33 @@
-main () {
-    var a, b, c;
-    a = 0;
-    b = 0;
-    c = 0;
-    return c;
+iterate(n) {
+    var f;
+    f = 1;
+    while (n>0) {
+        f = f*n;
+        n = n-1;
+    }
+    return f;
+}
+
+recurse(n) {
+    var f;
+    if (n==0) { f=1; }
+    else { f=n*recurse(n-1); }
+    return f;
+}
+
+foo(p,x) {
+    var f,q;
+    if (*p==0) { f=1; }
+    else {
+        q = alloc 0;
+        *q = (*p)-1;
+        f=(*p)*(x(q,x));
+    }
+    return f;
+}
+
+main() {
+    var n;
+    n = input;
+    return foo(&n,foo);
 }

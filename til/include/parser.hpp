@@ -6,6 +6,7 @@
 #include <vector>
 
 namespace parser {
+
 class Parser {
 public:
   void addTokens(std::vector<lexer::Token> newTokens);
@@ -21,7 +22,9 @@ private:
   bool check(lexer::TokenType type) const;
 
   std::unique_ptr<ast::Function> parseFunction();
+
   std::unique_ptr<ast::Stmt> parseStatement();
+  std::vector<std::unique_ptr<ast::Stmt>> parseBlock();
 
   std::unique_ptr<ast::Expr> parseExpression();
   std::unique_ptr<ast::Expr> parseEquality();
@@ -29,6 +32,12 @@ private:
   std::unique_ptr<ast::Expr> parseTerm();
   std::unique_ptr<ast::Expr> parseFactor();
   std::unique_ptr<ast::Expr> parseUnary();
+  std::unique_ptr<ast::Expr> parsePostfix();
   std::unique_ptr<ast::Expr> parsePrimary();
+
+  std::unique_ptr<ast::Stmt> parseIdentifierStatement();
+  std::unique_ptr<ast::Stmt> parsePointerAssignment();
+  std::unique_ptr<ast::Stmt> parseParenthesizedFieldAssignment();
 };
+
 } // namespace parser

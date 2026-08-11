@@ -20,7 +20,8 @@ const std::unordered_map<std::string, TokenType> operators = {
 
 const std::unordered_map<std::string, TokenType> keywords = {
     {"var", TokenType::Var},       {"input", TokenType::Input},
-    {"output", TokenType::Output}, {"if", TokenType::If},
+    {"output", TokenType::Output}, {"alloc", TokenType::Alloc},
+    {"null", TokenType::Null},     {"if", TokenType::If},
     {"else", TokenType::Else},     {"while", TokenType::While},
     {"return", TokenType::Return}};
 
